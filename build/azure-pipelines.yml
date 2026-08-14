@@ -136,8 +136,6 @@ extends:
 
                 - task: NuGetAuthenticate@1
                   displayName: Authenticate NuGet feeds
-                  inputs:
-                    nuGetServiceConnections: PowerToysPublicDependencies
 
                 - task: PowerShell@2
                   displayName: Building MSIX
