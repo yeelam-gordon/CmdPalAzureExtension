@@ -113,7 +113,7 @@ public class DataManagerTests
             .ReturnsAsync(new WorkItemQueryResult
             {
                 QueryType = QueryType.Flat,
-                WorkItems =
+                WorkItems = (WorkItemReference[])
                 [
                     new WorkItemReference
                     {
