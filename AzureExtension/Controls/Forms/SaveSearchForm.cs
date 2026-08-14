@@ -15,7 +15,7 @@ using Serilog;
 namespace AzureExtension.Controls.Forms;
 
 #pragma warning disable SA1649 // File name should match first type name
-public abstract class SaveSearchForm<TSearch> : FormContent
+public abstract partial class SaveSearchForm<TSearch> : FormContent
     where TSearch : IAzureSearch
 {
     private readonly ISavedSearchesUpdater<TSearch> _savedSearchesUpdater;
@@ -64,13 +64,15 @@ public abstract class SaveSearchForm<TSearch> : FormContent
     {
         try
         {
+            _logger.Information("SubmitForm invoked. searchType={SearchType}, infoType={InfoType}, inputsLength={InputsLength}", _searchUpdatedType, _searchInfoType, inputs?.Length ?? 0);
             _mediator.SetLoadingState(true, _searchUpdatedType);
-            var payloadJson = JsonNode.Parse(inputs);
+            var payloadJson = string.IsNullOrEmpty(inputs) ? null : JsonNode.Parse(inputs);
             ParseFormSubmission(payloadJson);
 
             var searchInfoParameters = GetSearchInfoParameters();
 
             var searchInfo = GetSearchInfo(searchInfoParameters);
+            _logger.Information("SubmitForm validation completed. Result={Result}, Name={Name}, Error={Error}", searchInfo.Result, searchInfo.Name, searchInfo.ErrorMessage);
             if (searchInfo.Result != ResultType.Success)
             {
                 _mediator.SetLoadingState(false, _searchUpdatedType);
@@ -115,12 +117,17 @@ public abstract class SaveSearchForm<TSearch> : FormContent
     {
         var account = _accountProvider.GetDefaultAccount();
 
-        return parameters switch
+        // SubmitForm runs on the extension's COM/STA thread. Blocking that thread directly
+        // on an async server call (GetInfo(...).Result) can deadlock when awaited
+        // continuations marshal back to the same single-threaded context. Offload the async
+        // validation to a thread-pool thread (which has no captured SynchronizationContext)
+        // and block on that instead, which cannot deadlock.
+        return Task.Run(async () => parameters switch
         {
             DefinitionInfoParameters defParams when defParams.DefinitionId > 0 =>
-                _azureClientHelpers.GetInfo(defParams.Url, account, defParams.InfoType, defParams.DefinitionId).Result,
-                _ => _azureClientHelpers.GetInfo(parameters.Url, account, parameters.InfoType).Result,
-        };
+                await _azureClientHelpers.GetInfo(defParams.Url, account, defParams.InfoType, defParams.DefinitionId),
+            _ => await _azureClientHelpers.GetInfo(parameters.Url, account, parameters.InfoType),
+        }).GetAwaiter().GetResult();
     }
 
     protected string GetErrorMessageForSearchType(InfoType infoType)
