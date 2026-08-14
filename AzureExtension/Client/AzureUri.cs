@@ -533,11 +533,6 @@ public class AzureUri
             return false;
         }
 
-        if (!Uri.Host.Equals("dev.azure.com", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
         if (string.IsNullOrEmpty(Project))
         {
             return false;

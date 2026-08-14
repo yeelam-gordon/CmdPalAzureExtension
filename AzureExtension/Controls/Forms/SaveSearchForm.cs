@@ -71,6 +71,8 @@ public abstract partial class SaveSearchForm<TSearch> : FormContent
 
             var searchInfoParameters = GetSearchInfoParameters();
 
+            _logger.Information("SubmitForm parsed URL for validation: '{Url}' (rawInputs: {Inputs})", searchInfoParameters.Url, inputs);
+
             var searchInfo = GetSearchInfo(searchInfoParameters);
             _logger.Information("SubmitForm validation completed. Result={Result}, Name={Name}, Error={Error}", searchInfo.Result, searchInfo.Name, searchInfo.ErrorMessage);
             if (searchInfo.Result != ResultType.Success)
