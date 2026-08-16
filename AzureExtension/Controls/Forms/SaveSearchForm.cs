@@ -71,9 +71,9 @@ public abstract partial class SaveSearchForm<TSearch> : FormContent
             var searchInfoParameters = GetSearchInfoParameters();
 
             var searchInfo = GetSearchInfo(searchInfoParameters);
-            _logger.Information("Validated {SearchType} search for URL '{Url}': Result={Result}, Name={Name}, Error={Error}", _searchUpdatedType, searchInfoParameters.Url, searchInfo.Result, searchInfo.Name, searchInfo.ErrorMessage);
             if (searchInfo.Result != ResultType.Success)
             {
+                _logger.Warning("Failed to validate {SearchType} search for URL '{Url}': {Error}", _searchUpdatedType, searchInfoParameters.Url, searchInfo.ErrorMessage);
                 _mediator.SetLoadingState(false, _searchUpdatedType);
                 var errorMessage = string.Format(CultureInfo.CurrentCulture, GetErrorMessageForSearchType(_searchInfoType), !string.IsNullOrWhiteSpace(searchInfo.Name) ? searchInfo.Name : _resources.GetResource("Messages_UnknownName"), searchInfo.ErrorMessage);
                 ToastHelper.ShowErrorToast(errorMessage);
@@ -116,17 +116,12 @@ public abstract partial class SaveSearchForm<TSearch> : FormContent
     {
         var account = _accountProvider.GetDefaultAccount();
 
-        // SubmitForm runs on the extension's COM/STA thread. Blocking that thread directly
-        // on an async server call (GetInfo(...).Result) can deadlock when awaited
-        // continuations marshal back to the same single-threaded context. Offload the async
-        // validation to a thread-pool thread (which has no captured SynchronizationContext)
-        // and block on that instead, which cannot deadlock.
-        return Task.Run(async () => parameters switch
+        return parameters switch
         {
             DefinitionInfoParameters defParams when defParams.DefinitionId > 0 =>
-                await _azureClientHelpers.GetInfo(defParams.Url, account, defParams.InfoType, defParams.DefinitionId),
-            _ => await _azureClientHelpers.GetInfo(parameters.Url, account, parameters.InfoType),
-        }).GetAwaiter().GetResult();
+                _azureClientHelpers.GetInfo(defParams.Url, account, defParams.InfoType, defParams.DefinitionId).Result,
+                _ => _azureClientHelpers.GetInfo(parameters.Url, account, parameters.InfoType).Result,
+        };
     }
 
     protected string GetErrorMessageForSearchType(InfoType infoType)
