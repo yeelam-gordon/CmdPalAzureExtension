@@ -64,17 +64,14 @@ public abstract partial class SaveSearchForm<TSearch> : FormContent
     {
         try
         {
-            _logger.Information("SubmitForm invoked. searchType={SearchType}, infoType={InfoType}, inputsLength={InputsLength}", _searchUpdatedType, _searchInfoType, inputs?.Length ?? 0);
             _mediator.SetLoadingState(true, _searchUpdatedType);
             var payloadJson = string.IsNullOrEmpty(inputs) ? null : JsonNode.Parse(inputs);
             ParseFormSubmission(payloadJson);
 
             var searchInfoParameters = GetSearchInfoParameters();
 
-            _logger.Information("SubmitForm parsed URL for validation: '{Url}' (rawInputs: {Inputs})", searchInfoParameters.Url, inputs);
-
             var searchInfo = GetSearchInfo(searchInfoParameters);
-            _logger.Information("SubmitForm validation completed. Result={Result}, Name={Name}, Error={Error}", searchInfo.Result, searchInfo.Name, searchInfo.ErrorMessage);
+            _logger.Information("Validated {SearchType} search for URL '{Url}': Result={Result}, Name={Name}, Error={Error}", _searchUpdatedType, searchInfoParameters.Url, searchInfo.Result, searchInfo.Name, searchInfo.ErrorMessage);
             if (searchInfo.Result != ResultType.Success)
             {
                 _mediator.SetLoadingState(false, _searchUpdatedType);
