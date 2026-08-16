@@ -73,7 +73,6 @@ public abstract partial class SaveSearchForm<TSearch> : FormContent
             var searchInfo = GetSearchInfo(searchInfoParameters);
             if (searchInfo.Result != ResultType.Success)
             {
-                _logger.Warning("Failed to validate {SearchType} search for URL '{Url}': {Error}", _searchUpdatedType, searchInfoParameters.Url, searchInfo.ErrorMessage);
                 _mediator.SetLoadingState(false, _searchUpdatedType);
                 var errorMessage = string.Format(CultureInfo.CurrentCulture, GetErrorMessageForSearchType(_searchInfoType), !string.IsNullOrWhiteSpace(searchInfo.Name) ? searchInfo.Name : _resources.GetResource("Messages_UnknownName"), searchInfo.ErrorMessage);
                 ToastHelper.ShowErrorToast(errorMessage);
