@@ -18,7 +18,8 @@
 		<GenerateTestArtifacts>True</GenerateTestArtifacts>
 		<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
 		<GenerateAppxPackageOnBuild>True</GenerateAppxPackageOnBuild>
-		<WindowsAppSdkDeploymentManagerInitialize>False</WindowsAppSdkDeploymentManagerInitialize>
+		<WindowsAppSdkDeploymentManagerInitialize>False</WindowsAppSdkDeploymentManagerInitialize>
+
 	</PropertyGroup>
 
 	<ItemGroup>
